@@ -1,5 +1,5 @@
 dependencies:
-  - bokeh=2.3.3
+  - bokeh==2.3.3
   - numpy
   - matplotlib
   - pip
