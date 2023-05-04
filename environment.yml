@@ -1,0 +1,7 @@
+dependencies:
+  - bokeh
+  - numpy
+  - matplotlib
+  - pip
+  - pip:
+    - jupyter-server-proxy
