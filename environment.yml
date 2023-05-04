@@ -1,7 +1,8 @@
 dependencies:
-  - bokeh==2.3.3
+  - bokeh
   - numpy
   - matplotlib
   - pip
   - pip:
+    - nbserverproxy
     - jupyter-server-proxy
