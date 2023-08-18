@@ -33,7 +33,7 @@ ymin = np.min(yh)
 ymax= np.max(yh)
 xmin = xmin-0.1*dx
 xmax=xmax+0.1*dx
-h = 700
+h = 800
 w = int(round(h*(xmax-xmin)/(ymax-ymin),0))
 
 # Choose default alpha value for hexagon shading
@@ -57,7 +57,7 @@ p = figure(x_axis_type="mercator", y_axis_type="mercator",
            tools= "pan,wheel_zoom,tap",active_scroll="wheel_zoom",
            x_range=Range1d(xmin,xmax), y_range=Range1d(ymin,ymax),
            height=h,width=w,
-           title='Click to create demand point.      Double-click to create source')
+           title='Instructions: 1. Double-click to create ONE source; 2. Click to create demand point(s).')
 p.title.align = "center"          
 p.xgrid.visible = False
 p.ygrid.visible = False
@@ -74,6 +74,7 @@ cost_rgb = (255 * cm.RdYlGn(range(256))).astype('int')[::-1]
 cost_palette = [RGB(*tuple(rgb)).to_hex() for rgb in cost_rgb]
 # Create color scheme for hexagon grid using palette
 mapper = linear_cmap(field_name='z', palette=cost_palette,low=0,high=np.max(z))
+
 
 # Set up data source for source nodes
 water_source = ColumnDataSource(dict(xs=[],ys=[],xc=[],yc=[],ns=[],label=[]))
@@ -102,7 +103,10 @@ totals_data = ColumnDataSource(dict(x=[xt]*3,y=[2,1,0],
                                     xl=[[],[],[]],
                                     yl = [[2,2],[1,1],[0,0]],
                                     text=['','',''],
-                                    color = ['cyan','blue',color_opt]))
+                                    cost=[0.0,0.0,0.0],
+                                    color = ['cyan','blue',color_opt],
+                                    lw = [0.0,0.0,0.0],
+                                    al = [0.0,0.0,0.0]))
 
 # Add hexagon grid
 h = p.patches('xh', 'yh', alpha='al',selection_alpha='al',nonselection_alpha='al',source=grid_source,
@@ -262,6 +266,9 @@ def create_source(event):
     # Check if mouse cursor is outside hexagon grid or on existing network
     if (d2[i]>4e8):
         print('Cursor is outside grid area')
+    # Limit things to one source
+    elif len(water_source.data['xs']) > 0:
+        print('Only one source is allowed in network')
     # Check that we don't already have this point in the network
     elif i in network_nodes:
         print('Node is already in network')
@@ -371,6 +378,10 @@ def show_optimum(event):
                         [(2, 'Total cost if planned in advance = {:.2f}   ({:.0%} saved)'.format(min_cost,saved_cost/direct_cost))]})
     totals_data.patch({ 'xl' :
                         [(2, [0,xl])]})
+    # Update totals shown in summary text
+    totals_data.data['cost'] = [direct_cost/(Npoints-1), total_cost/(Npoints-1), min_cost/(Npoints-1)]
+    totals_data.data['lw'] = [2,2,2]
+    totals_data.data['al'] = [1, 1, 1]
     #print(xopt,yopt)
 
 def reset_optimum(event):
@@ -399,6 +410,7 @@ r.xaxis.major_tick_line_color = None
 r.xaxis.minor_tick_line_color = None
 r.xaxis.major_label_text_color = None
 r.circle(2,1,alpha=0)
+r.ray(y='cost', line_color='color', line_width='lw', alpha='al', source=totals_data, x=0, length=0, angle=0)
 r.vbar(x='link',top='cmax',width=0.5,source=network,color='cyan',alpha=0.5*al,line_color=None)
 r.vbar(x='link',top='cn',width=0.4,source=network,color='blue',alpha=al,line_color=None)
 #r.circle('link','cn',source=network,fill_color='blue',alpha=al,size=20,line_color=None)
