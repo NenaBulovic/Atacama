@@ -103,10 +103,10 @@ totals_data = ColumnDataSource(dict(x=[xt]*3,y=[2,1,0],
                                     xl=[[],[],[]],
                                     yl = [[2,2],[1,1],[0,0]],
                                     text=['','',''],
-                                    cost=[0.0,0.0,0.0],
-                                    color = ['cyan','blue',color_opt],
-                                    lw = [0.0,0.0,0.0],
-                                    al = [0.0,0.0,0.0]))
+                                    pos = [1,2,3],
+                                    lab = ['source','share','optimum'],
+                                    cost=[0,0,0],
+                                    col = ['cyan','blue',color_opt]))
 
 # Add hexagon grid
 h = p.patches('xh', 'yh', alpha='al',selection_alpha='al',nonselection_alpha='al',source=grid_source,
@@ -253,6 +253,7 @@ def create_demand_point(event):
                   'Total cost if sharing nework = {:.2f}   ({:.0%} saved)'.format(total_cost,saved_cost/direct_cost),
                   '']
             totals_data.data['xl']=[[0,xl],[0,xl],[0,0]]
+            totals_data.data['cost'] = [direct_cost, total_cost, 0]
         else:
             # For the first demand point, just update list of network nodes
             network_nodes = np.append(network_nodes,i)
@@ -303,6 +304,7 @@ def create_source(event):
                   'Total cost if sharing nework = {:.2f}   ({:.0%} saved)'.format(total_cost,saved_cost/direct_cost),
                   '']
             totals_data.data['xl']=[[0,xl],[0,xl],[0,0]]
+            totals_data.data['cost'] = [direct_cost, total_cost, 0]
         # Add this cell to list of sources
         xs = water_source.data['xs']
         xs.append(xh[i])
@@ -379,10 +381,12 @@ def show_optimum(event):
     totals_data.patch({ 'xl' :
                         [(2, [0,xl])]})
     # Update totals shown in summary text
-    totals_data.data['cost'] = [direct_cost/(Npoints-1), total_cost/(Npoints-1), min_cost/(Npoints-1)]
-    totals_data.data['lw'] = [2,2,2]
-    totals_data.data['al'] = [1, 1, 1]
+    totals_data.data['cost'] = [direct_cost, total_cost, min_cost]
     #print(xopt,yopt)
+
+# totals_data.data['cost'] = [direct_cost/(Npoints-1), total_cost/(Npoints-1), min_cost/(Npoints-1)]
+# totals_data.data['lw'] = [2,2,2]
+# totals_data.data['al'] = [1, 1, 1]
 
 def reset_optimum(event):
         totals_data.patch({ 'text' : [(2, '')]})
@@ -397,20 +401,33 @@ s.ygrid.visible = False
 s.axis.visible = False
 
 # Add lines
-key_lines = s.multi_line('xl','yl',source=totals_data,line_color='color',line_width=5,alpha=1,
+key_lines = s.multi_line('xl','yl',source=totals_data,line_color='col',line_width=5,alpha=1,
                               selection_line_alpha=1,nonselection_line_alpha=1,line_alpha=1)
 # Add labels
 key_text = LabelSet(x='x', y='y', text='text',source=totals_data, text_color='black',
                     text_font_size='14px',text_align='left',text_baseline='middle')
 s.add_layout(key_text)
 
-# Add graph to illustrate costs
-r = figure(width=w, height=250,tools="",margin=(0,0,30,20))#,y_range=Range1d(0,1))
+# Add graph to illustrate all costs
+ra = figure(width=w, height=220,tools="",margin=(0,0,30,20),
+           title = "Total network cost")#,y_range=Range1d(0,1))
+ra.xaxis.major_tick_line_color = None
+ra.xaxis.minor_tick_line_color = None
+ra.xaxis.major_label_text_color = None
+ra.vbar(x='pos', top='cost',color='col',source=totals_data,width=0.5,alpha=1,line_color=None)
+ra_bar_labels = LabelSet(x='pos',y='cost',text='lab',text_color='white',text_align='center',text_baseline='top',
+                       x_offset=0,y_offset=-10,source=totals_data,render_mode='canvas')
+ra.add_layout(ra_bar_labels)
+ra.yaxis.axis_label = 'Cost'# (relative)'
+
+# Add graph to illustrate segment costs
+r = figure(width=w, height=250,tools="",margin=(0,0,30,20),
+           title = "Unit cost per network segment")#,y_range=Range1d(0,1))
 r.xaxis.major_tick_line_color = None
 r.xaxis.minor_tick_line_color = None
 r.xaxis.major_label_text_color = None
 r.circle(2,1,alpha=0)
-r.ray(y='cost', line_color='color', line_width='lw', alpha='al', source=totals_data, x=0, length=0, angle=0)
+#r.ray(y='cost', line_color='color', line_width='lw', alpha='al', source=totals_data, x=0, length=0, angle=0)
 r.vbar(x='link',top='cmax',width=0.5,source=network,color='cyan',alpha=0.5*al,line_color=None)
 r.vbar(x='link',top='cn',width=0.4,source=network,color='blue',alpha=al,line_color=None)
 #r.circle('link','cn',source=network,fill_color='blue',alpha=al,size=20,line_color=None)
@@ -420,14 +437,14 @@ r.add_layout(bar_labels)
 r.xaxis.axis_label = 'Network segment'
 r.yaxis.axis_label = 'Cost'# (relative)'
 
-# Add table
-columns = [
-        TableColumn(field="ref", title="Link",width=50),
-        TableColumn(field="cmax", title="Cost directly to source",formatter=NumberFormatter(format='0.00'),width=140),
-        TableColumn(field="cn", title="Cost if network shared",formatter=NumberFormatter(format='0.00'),width=140),
-        TableColumn(field="saving",title="Cost saved by sharing network",formatter=NumberFormatter(format='0.00'),width=160)
-    ]
-q = DataTable(source=network, columns=columns, width=w, height=250,fit_columns=False,index_position=None,margin=(40,0,0,40))
+# # Add table
+# columns = [
+#         TableColumn(field="ref", title="Link",width=50),
+#         TableColumn(field="cmax", title="Cost directly to source",formatter=NumberFormatter(format='0.00'),width=140),
+#         TableColumn(field="cn", title="Cost if network shared",formatter=NumberFormatter(format='0.00'),width=140),
+#         TableColumn(field="saving",title="Cost saved by sharing network",formatter=NumberFormatter(format='0.00'),width=160)
+#     ]
+# q = DataTable(source=network, columns=columns, width=w, height=250,fit_columns=False,index_position=None,margin=(40,0,0,40))
 
 
 # Add a button to show a lower cost solution
@@ -447,7 +464,8 @@ def change_grid_alpha(attr,old,new):
 slider = Slider(start=0,end=1,value=al,step=0.05,title="Move slider to hide or show combined cost grid.  Current value")
 slider.on_change('value',change_grid_alpha)
 
-page = gridplot([[column(p,slider),column(s,r,row(show,reset),q)],[]],toolbar_location="left")
+page = gridplot([[column(p,slider),column(s,ra,r,row(show,reset))],[]],toolbar_location="left")
+# page = gridplot([[column(p,slider),column(s,r,row(show,reset),q)],[]],toolbar_location="left")
 
 curdoc().title = 'Simplified network tool'
 
