@@ -2,7 +2,7 @@
 # bokeh serve --show bokeh-app
 
 import numpy as np
-import xyzservices.providers as xyz
+# import xyzservices.providers as xyz
 from bokeh.plotting import figure, output_file, show
 from bokeh.models import Range1d,ColumnDataSource,TapTool,LabelSet,Button,NumberFormatter,Label,Slider
 # from bokeh.tile_providers import get_provider, STAMEN_TERRAIN
@@ -67,8 +67,8 @@ p.axis.visible = False
 # Add background map
 background_map=True
 if background_map:
-    #p.add_tile("CartoDB Positron", retina=True)
-    p.add_tile(xyz.Esri.WorldTopoMap)   # xyz.OpenStreetMap.Mapnik
+    p.add_tile("CartoDB Positron", retina=True)
+    #p.add_tile(xyz.Esri.WorldTopoMap)   # xyz.OpenStreetMap.Mapnik
 
 # Create cost pallete
 cost_rgb = (255 * cm.RdYlGn(range(256))).astype('int')[::-1]
