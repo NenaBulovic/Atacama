@@ -2,9 +2,9 @@ channels:
   - conda-forge
 dependencies:
   - python=3.9
-  - bokeh
-  - numpy
-  - matplotlib
+  - bokeh==3.3.0
+  - numpy==1.26.0
+  - matplotlib==3.8.0
   - pip
   - pip:
     - jupyter-server-proxy
