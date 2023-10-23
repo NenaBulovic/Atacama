@@ -2,11 +2,12 @@
 # bokeh serve --show bokeh-app
 
 import numpy as np
+import xyzservices.providers as xyz
 from bokeh.plotting import figure, output_file, show
 from bokeh.models import Range1d,ColumnDataSource,TapTool,LabelSet,Button,NumberFormatter,Label,Slider
-from bokeh.tile_providers import get_provider, STAMEN_TERRAIN
+# from bokeh.tile_providers import get_provider, STAMEN_TERRAIN
 from bokeh.colors import RGB
-from bokeh.layouts import column,row,gridplot,widgetbox
+from bokeh.layouts import column,row,gridplot #,widgetbox
 from bokeh.io import curdoc
 from bokeh.transform import linear_cmap
 from matplotlib import cm
@@ -66,8 +67,8 @@ p.axis.visible = False
 # Add background map
 background_map=True
 if background_map:
-    tile_provider = get_provider(STAMEN_TERRAIN)
-    p.add_tile(tile_provider)
+    #p.add_tile("CartoDB Positron", retina=True)
+    p.add_tile(xyz.Esri.WorldTopoMap)   # xyz.OpenStreetMap.Mapnik
 
 # Create cost pallete
 cost_rgb = (255 * cm.RdYlGn(range(256))).astype('int')[::-1]
@@ -137,11 +138,11 @@ demand = p.circle('xd','yd',source=water_demand,fill_color='blue',alpha=1,size=2
                   fill_alpha=1,nonselection_fill_alpha=1,selection_fill_alpha=1)
 # And numeric lables on demand points
 labels = LabelSet(x='xd',y='yd',text='node',text_color='white',text_align='center',text_baseline='middle',
-                  x_offset=0,y_offset=0,source=water_demand,render_mode='canvas')
+                  x_offset=0,y_offset=0,source=water_demand)
 p.add_layout(labels)
 # And numeric lables on source points
 source_labels = LabelSet(x='xc',y='yc',text='label',text_color='white',text_align='center',text_baseline='middle',
-                  x_offset=0,y_offset=0,source=water_source,render_mode='canvas')
+                  x_offset=0,y_offset=0,source=water_source)
 p.add_layout(source_labels)
 
 # Set up list for all cells in network
@@ -416,7 +417,7 @@ ra.xaxis.minor_tick_line_color = None
 ra.xaxis.major_label_text_color = None
 ra.vbar(x='pos', top='cost',color='col',source=totals_data,width=0.5,alpha=1,line_color=None)
 ra_bar_labels = LabelSet(x='pos',y='cost',text='lab',text_color='white',text_align='center',text_baseline='top',
-                       x_offset=0,y_offset=-10,source=totals_data,render_mode='canvas')
+                       x_offset=0,y_offset=-10,source=totals_data)
 ra.add_layout(ra_bar_labels)
 ra.yaxis.axis_label = 'Cost'# (relative)'
 
@@ -432,7 +433,7 @@ r.vbar(x='link',top='cmax',width=0.5,source=network,color='cyan',alpha=0.5*al,li
 r.vbar(x='link',top='cn',width=0.4,source=network,color='blue',alpha=al,line_color=None)
 #r.circle('link','cn',source=network,fill_color='blue',alpha=al,size=20,line_color=None)
 bar_labels = LabelSet(x='link',y='cn',text='ref',text_color='white',text_align='center',text_baseline='top',
-                       x_offset=0,y_offset=-10,source=network,render_mode='canvas')
+                       x_offset=0,y_offset=-10,source=network)
 r.add_layout(bar_labels)
 r.xaxis.axis_label = 'Network segment'
 r.yaxis.axis_label = 'Cost'# (relative)'
